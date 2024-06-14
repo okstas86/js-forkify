@@ -5,13 +5,14 @@ import * as model from './model.js'
 import recipeView from './views/recipeView.js'
 import searchView from './views/searchView.js'
 import resultsView from './views/resultsView.js'
+import bookmarksView from './views/bookmarksView.js'
 import paginationView from "./views/paginationView.js"
 
 if (module.hot) {
   module.hot.accept()
 }
 
-const api='0f554104-2e23-4469-8aac-6ed86821d679'
+// const api='0f554104-2e23-4469-8aac-6ed86821d679'
 const controlRecepy = async () => {
   try {
     const id = window.location.hash.slice(1)
@@ -20,13 +21,15 @@ const controlRecepy = async () => {
 
     //update results view to mark selected search result
     resultsView.update(model.getSearchresultsPage())
-   
+    
     //loading recipe
     await model.loadRecipe(id)
-
+    
     //rendering recipe
     recipeView.render(model.state.recipe)
-   
+    
+    //updating bookmarks view
+    bookmarksView.update(model.state.bookmarks)
   } catch (error) {
     console.log(error)
     recipeView.renderError()
@@ -48,7 +51,7 @@ const controlSearchResults = async () => {
 
     //render results
     // resultsView.render(model.state.search.results)
-    resultsView.render(model.getSearchresultsPage(3))
+    resultsView.render(model.getSearchresultsPage(1))
 
     //Render initial pagination button
     paginationView.render(model.state.search)
@@ -80,10 +83,27 @@ const controlServings = (newServings) => {
   
 }
 
+const controlAddBookmark = () => {
+  //add or remove bookmark
+  if (!model.state.recipe.bookmarked) model.addBookmark(model.state.recipe);
+  else model.deleteBookmark(model.state.recipe.id);
+
+ //update recipe view
+  recipeView.update(model.state.recipe);
+
+  // render bookmarks
+  bookmarksView.render(model.state.bookmarks)
+}
+
+const controlBookmarks = () => {
+  bookmarksView.render(model.state.bookmarks)
+}
 
 const init = () => {
+  bookmarksView.addHandlerRender(controlBookmarks)
   recipeView.addHandlerRender(controlRecepy)
   recipeView.addHandlerUpdateServings(controlServings)
+  recipeView.addHandlerAddBookmark(controlAddBookmark)
   searchView.addHandlerSearch(controlSearchResults)
   paginationView.addHandlerClick(controlPagination)
 
