@@ -1,5 +1,6 @@
 
 import "core-js/stable"
+import { MODAL_CLOSE_SEC } from "./config.js"
 import 'regenerator-runtime/runtime'
 import * as model from './model.js'
 import recipeView from './views/recipeView.js'
@@ -7,12 +8,13 @@ import searchView from './views/searchView.js'
 import resultsView from './views/resultsView.js'
 import bookmarksView from './views/bookmarksView.js'
 import paginationView from "./views/paginationView.js"
+import addRecipeView from "./views/addRecipeView.js"
 
 if (module.hot) {
   module.hot.accept()
 }
 
-// const api='0f554104-2e23-4469-8aac-6ed86821d679'
+
 const controlRecepy = async () => {
   try {
     const id = window.location.hash.slice(1)
@@ -99,6 +101,40 @@ const controlBookmarks = () => {
   bookmarksView.render(model.state.bookmarks)
 }
 
+const controlAddRecipe = async(newRecipe) => {
+  try {
+  
+    //show loading spinner
+    addRecipeView.renderSpinner()
+    
+  //upload recepy data
+ await model.uploadRecipe(newRecipe)
+  console.log(model.state.recipe)
+
+   
+  //Render recipe
+  recipeView.render(model.state.recipe)
+
+  //Success message
+    addRecipeView.renderMessage()
+    
+    //Render bookmarks
+    bookmarksView.render(model.state.bookmarks)
+
+    //Change Id in URL
+    window.history.pushState(null,'',`#${model.state.recipe.id}`)
+
+  //Close form window
+  setTimeout(() => {
+    addRecipeView.toggleWindow()
+  },MODAL_CLOSE_SEC*1000)
+ 
+} catch (error) {
+  console.error('controlAddRecipe:', error)
+  addRecipeView.renderError(error.message)
+}
+}
+
 const init = () => {
   bookmarksView.addHandlerRender(controlBookmarks)
   recipeView.addHandlerRender(controlRecepy)
@@ -106,7 +142,7 @@ const init = () => {
   recipeView.addHandlerAddBookmark(controlAddBookmark)
   searchView.addHandlerSearch(controlSearchResults)
   paginationView.addHandlerClick(controlPagination)
-
+  addRecipeView.addHandlerUpload(controlAddRecipe)
  }
 
 init()
